@@ -10,12 +10,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EvidenceRN — Nursing Evidence at the Bedside</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2300284C'/%3E%3Cpath d='M18 14h-7v36h7M46 14h7v36h-7' fill='none' stroke='%235784AB' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' font-size='24' font-weight='700' fill='white'%3ERN%3C/text%3E%3C/svg%3E">
 <style>
   :root{
     color-scheme: light;
-    --ink:#1c2430; --ink-soft:#3a4555; --muted:#6b7c93; --line:#e2e8f0;
-    --bg:#f6f8fb; --card:#ffffff; --brand:#c94a35; --brand-dark:#a83a28;
-    --brand-tint:#fdf0ed; --accent:#a83a28; --warn:#b45309;
+    --ink:#0f2540; --ink-soft:#33465e; --muted:#6b7c93; --line:#e2e8f0;
+    --bg:#f6f8fb; --card:#ffffff; --brand:#1D5A91; --brand-dark:#00284C;
+    --brand-tint:#EAF2FA; --accent:#1D5A91; --warn:#b45309;
     --l1:#0d7c73; --l2:#1b6fb3; --l3:#5a5fb8; --l4:#8a5cc0; --l5:#9a6a3a; --l6:#6b7c93; --guide:#a16207;
     --shadow:0 1px 2px rgba(15,37,64,.06),0 4px 16px rgba(15,37,64,.06);
   }
@@ -26,11 +27,11 @@
   a{color:var(--accent);text-decoration:none}
   a:hover{text-decoration:underline}
   .wrap{max-width:860px;margin:0 auto;padding:0 18px}
-  .hero{background:linear-gradient(160deg,#151b24,#1c2430 55%,#2c3646);color:#fff;padding:20px 0 24px}
+  .hero{background:linear-gradient(160deg,#001b35,#00284C 55%,#0a3d6b);color:#fff;padding:20px 0 24px}
   .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:12px}
-  .logo .mark{width:32px;height:32px;border-radius:8px;background:#e8664f;display:grid;place-items:center;font-size:17px}
+  .logo .mark{width:34px;height:34px;display:grid;place-items:center}
   .logo small{display:block;font-weight:500;font-size:11px;opacity:.85}
-  .searchbar{background:#fff;border-radius:13px;padding:7px;display:flex;gap:8px;box-shadow:0 10px 30px rgba(10,14,20,.35);align-items:center}
+  .searchbar{background:#fff;border-radius:13px;padding:7px;display:flex;gap:8px;box-shadow:0 10px 30px rgba(0,20,40,.35);align-items:center}
   .searchbar input{flex:1;border:0;font-size:15px;padding:11px 13px;color:var(--ink);outline:none;background:transparent;min-width:0}
   .searchbar button{background:var(--brand);color:#fff;border:0;border-radius:9px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
   .searchbar button:hover{background:var(--brand-dark)}
@@ -66,7 +67,7 @@
   .deepbar{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .deepbar button{background:var(--brand-tint);color:var(--brand-dark);border:1px solid var(--brand);border-radius:9px;
     padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
-  .deepbar button:hover{background:#fae1db}
+  .deepbar button:hover{background:#dbe8f5}
   .deepbar button:disabled{opacity:.6;cursor:default}
   .deepbar .hint{font-size:11.5px;color:var(--muted)}
   .deepnote{display:inline-block;background:var(--brand-tint);color:var(--brand-dark);font-size:10.5px;font-weight:700;
@@ -141,7 +142,7 @@
 <body>
 <div class="hero">
   <div class="wrap">
-    <div class="logo"><span class="mark">✚</span><span>EvidenceRN<small>Ask a clinical question. Get a cited answer from nursing evidence.</small></span></div>
+    <div class="logo"><span class="mark"><svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true" style="display:block"><rect width="64" height="64" rx="14" fill="#0a3d6b"/><path d="M17 16h-6v32h6M47 16h6v32h-6" fill="none" stroke="#5784AB" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><text x="32" y="39.5" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="19" font-weight="700" fill="#fff">RN</text></svg></span><span>EvidenceRN<small>Ask a clinical question. Get a cited answer from nursing evidence.</small></span></div>
     <div class="searchbar">
       <input id="q" type="text" placeholder="e.g., does hourly rounding reduce patient falls?" autocomplete="off">
       <button id="go">Get evidence</button>
