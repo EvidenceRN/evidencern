@@ -9,7 +9,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EvidenceRN — Nursing Evidence at the Bedside</title>
+<title>EvidenceRN | Cited evidence for nursing practice</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2300284C'/%3E%3Cpath d='M18 14h-7v36h7M46 14h7v36h-7' fill='none' stroke='%235784AB' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' font-size='24' font-weight='700' fill='white'%3ERN%3C/text%3E%3C/svg%3E">
 <style>
   :root{
@@ -188,7 +188,7 @@
     <div class="state">
       <div class="big">🩺</div>
       <h2>Search the nursing evidence base</h2>
-      <p>Type a question or tap a bedside topic. You get a synthesized, citation-linked answer plus the sources behind it, labeled by evidence type.</p>
+      <p>Type a question or tap a common topic. You get a synthesized, citation-linked answer plus the sources behind it, labeled by evidence type.</p>
       <div class="legend" style="justify-content:center">
         <span><i class="dot" style="background:var(--l1)"></i> I — SR / meta-analysis</span>
         <span><i class="dot" style="background:var(--guide)"></i> I — EBP guideline</span>
@@ -660,7 +660,7 @@ async function synthesize(question,runId,snapshot){
         abstract:(a.abstract||"").slice(0,1600)
       }))
     };
-    const prompt="You are a nursing evidence synthesis assistant supporting a bedside nurse. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Keep practice implications within the registered nurse scope of practice: when an action requires a provider order, prescribing authority, or advanced practice licensure, say so explicitly.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on bedside application, with citations>";
+    const prompt="You are a nursing evidence synthesis assistant supporting a nurse in clinical practice. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Keep practice implications within the registered nurse scope of practice: when an action requires a provider order, prescribing authority, or advanced practice licensure, say so explicitly.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on application in practice, with citations>";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // a newer search started; discard this stale answer
     const text=normalizeAnswer(r);
@@ -773,7 +773,7 @@ async function askFollowup(){
     // Reuse full texts already retrieved by deep read, so follow-ups answer
     // from the richest material available, keeping the same source numbers.
     if(DEEP_SOURCES.length)payload.full_text_sources=DEEP_SOURCES.map(s=>({n:s.n,title:s.title,full_text:(s.full_text||"").slice(0,4000)}));
-    const prompt="A bedside nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Keep practice implications within RN scope of practice, noting when an action requires a provider order. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
+    const prompt="A nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Keep practice implications within RN scope of practice, noting when an action requires a provider order. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // user started a new search; drop this stale reply
     const a=normalizeAnswer(r).trim();
