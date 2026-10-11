@@ -4,7 +4,7 @@
 
 Ask a clinical question in plain language. EvidenceRN searches PubMed, screens out retracted records, labels each source by evidence type (Melnyk & Fineout-Overholt hierarchy), and writes a short synthesized answer where every claim links to a numbered source. Follow-up questions reuse the same sources. A "deep read" pulls open-access full text from PubMed Central to refine the answer.
 
-Status: **prototype (v0.5.2)**. Built by a nurse practitioner to show what a transparent, open evidence assistant for nurses looks like. It is not a clinical decision support product. See [LIMITATIONS.md](LIMITATIONS.md) before using it for anything beyond exploration and education.
+Status: **prototype (v0.5.2)**. EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai), built by a nurse practitioner to show what a transparent, open evidence assistant for nurses looks like. It is not a clinical decision support product. See [LIMITATIONS.md](LIMITATIONS.md) before using it for anything beyond exploration and education.
 
 ## Why this exists
 
@@ -72,5 +72,7 @@ Contributions are welcome, and the project is actively looking for two or three 
 Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ## Acknowledgments
+
+EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai), which offers nurse-led AI education for nurses and other clinicians. Project site: https://evidencern.com
 
 Sources come from PubMed and PubMed Central, services of the U.S. National Library of Medicine. NLM does not endorse this software. Evidence-level labels follow Melnyk, B. M., & Fineout-Overholt, E., *Evidence-Based Practice in Nursing & Healthcare*.

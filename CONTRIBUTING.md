@@ -4,7 +4,7 @@ Thank you for your interest. This document explains how the project works, what 
 
 ## How the project is run
 
-EvidenceRN was built by Stephen Ferrara, a family nurse practitioner, professor, and associate dean of AI at Columbia University School of Nursing, as a working prototype of a transparent evidence assistant for nurses. He sets clinical direction and product priorities. He is not a full-time engineer and does not plan to be the day-to-day maintainer.
+EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai). It was built by Stephen A. Ferrara, DNP, RN, FNP-BC, FAAN, FAANP, a family nurse practitioner and founder of AI + Nurse Academy, as a working prototype of a transparent evidence assistant for nurses. He sets clinical direction and product priorities. He is not a full-time engineer and does not plan to be the day-to-day maintainer.
 
 **The project is looking for two or three maintainers.** If you want the role, the path is through work: open issues, submit pull requests, review others' pull requests, and show consistent judgment over a few weeks. Maintainers get merge rights and a voice in the roadmap. Clinical and safety decisions stay with the clinical lead.
 
