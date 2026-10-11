@@ -1,18 +1,15 @@
-Secrets: never commit your API key
-
+# Secrets: never commit your API key
 .env
 .env.*
 !.env.example
 
-OS and editor noise
-
+# OS and editor noise
 .DS_Store
 Thumbs.db
 *.swp
 .vscode/
 .idea/
 
-Node (no dependencies today, kept for future contributors)
-
+# Node (no dependencies today, kept for future contributors)
 node_modules/
 npm-debug.log*
