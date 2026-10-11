@@ -1,7 +1,7 @@
 {
   "name": "evidencern",
   "version": "0.5.2",
-  "description": "EvidenceRN: an open prototype for cited, evidence-graded answers to bedside nursing questions, built on PubMed.",
+  "description": "EvidenceRN: an open prototype for cited, evidence-graded answers to nursing questions, built on PubMed.",
   "license": "Apache-2.0",
   "author": "Stephen Ferrara",
   "repository": {

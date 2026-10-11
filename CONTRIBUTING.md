@@ -14,7 +14,7 @@ Nurses, nurse informaticists, clinical librarians, and evidence-based practice e
 
 In rough priority order:
 
-1. **A validation set.** Fifty to one hundred real bedside questions across acute care, primary care, geriatrics, pediatrics, women's health, infection prevention, medication safety, wounds, and transitions of care, each with a clinician-written note on what a good answer must contain. This is the foundation for every other improvement.
+1. **A validation set.** Fifty to one hundred real nursing questions across acute care, primary care, geriatrics, pediatrics, women's health, infection prevention, medication safety, wounds, and transitions of care, each with a clinician-written note on what a good answer must contain. This is the foundation for every other improvement.
 2. **Authentication and rate limiting** in `server.js`, so the project can be deployed publicly without exposing the host's API budget.
 3. **Server-side PubMed proxy** with NCBI API key support, for higher rate limits.
 4. **Full-text section chunking** for deep read (methods, results, limitations, conclusion as separate blocks), replacing the current truncated single string.

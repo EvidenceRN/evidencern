@@ -1,6 +1,6 @@
 # EvidenceRN
 
-**An open prototype for cited, evidence-graded answers to bedside nursing questions.**
+**An open prototype for cited, evidence-graded answers to nursing questions.**
 
 Ask a clinical question in plain language. EvidenceRN searches PubMed, screens out retracted records, labels each source by evidence type (Melnyk & Fineout-Overholt hierarchy), and writes a short synthesized answer where every claim links to a numbered source. Follow-up questions reuse the same sources. A "deep read" pulls open-access full text from PubMed Central to refine the answer.
 
@@ -8,7 +8,7 @@ Status: **prototype (v0.5.2)**. EvidenceRN is a project of [AI + Nurse Academy](
 
 ## Why this exists
 
-Nurses need fast, trustworthy answers at the bedside. Commercial products are arriving in this space with proprietary evidence bases and institutional contracts. EvidenceRN takes a different path on purpose: public literature, visible search strategy, labeled evidence levels, retraction screening, and a citation check on every answer, all in a single readable file anyone can inspect, run, and improve.
+Nurses need fast, trustworthy answers in every setting where they practice, from hospitals and clinics to schools, homes, and communities. Commercial products are arriving in this space with proprietary evidence bases and institutional contracts. EvidenceRN takes a different path on purpose: public literature, visible search strategy, labeled evidence levels, retraction screening, and a citation check on every answer, all in a single readable file anyone can inspect, run, and improve.
 
 The code is open under Apache 2.0. The name EvidenceRN belongs to the project founder (see [NOTICE](NOTICE)).
 
