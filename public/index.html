@@ -276,9 +276,11 @@ async function askAI(prompt,payload){
 // PubMed ANDs every word, so phrasing like "what is recommended per current
 // evidence" returns zero results even when the literature exists.
 async function extractQuery(raw){
-  // Short keyword-style questions pass through untouched.
-  if(raw.split(/\s+/).length<=6) return raw;
-  const prompt="Convert the clinical question in the attached data into a PubMed Boolean keyword query.\nRules:\n- 2 to 4 concept groups joined by AND\n- each group is 1 to 4 synonyms joined by OR, wrapped in parentheses\n- use only clinically meaningful terms: conditions, interventions, comparators, populations, outcomes\n- include both intervention names when the question compares two things\n- NO question words (what, which, recommended, evidence, current, best), NO field tags, NO quotation marks\nReturn ONLY the query string on one line, nothing else.\nExample input: For a Stage 3 pressure injury with tunneling, what dressing is best?\nExample output: (pressure ulcer OR pressure injury) AND (dressing OR wound care)";
+  // Every question is converted, including short ones and quick-topic buttons,
+  // because PubMed ANDs every typed word. Only queries already written in PubMed
+  // syntax (field tags or uppercase Boolean operators) pass through untouched.
+  if(/\[|\bAND\b|\bOR\b|\bNOT\b/.test(raw)) return raw;
+  const prompt="Convert the clinical question in the attached data into a PubMed Boolean keyword query.\nRules:\n- 1 to 4 concept groups joined by AND (use 1 group only when the question names a single topic, such as an abbreviation)\n- each group is 1 to 4 synonyms joined by OR, wrapped in parentheses\n- use only clinically meaningful terms: conditions, interventions, comparators, populations, outcomes\n- include both intervention names when the question compares two things\n- NO question words (what, which, recommended, evidence, current, best), NO field tags, NO quotation marks\nReturn ONLY the query string on one line, nothing else.\nExample input: For a Stage 3 pressure injury with tunneling, what dressing is best?\nExample output: (pressure ulcer OR pressure injury) AND (dressing OR wound care)";
   const r=await askAI(prompt,{question:raw});
   let q=normalizeAnswer(r).trim().split("\n")[0].trim();
   // sanity: reject anything suspicious and fall back to the raw question
@@ -660,7 +662,7 @@ async function synthesize(question,runId,snapshot){
         abstract:(a.abstract||"").slice(0,1600)
       }))
     };
-    const prompt="You are a nursing evidence synthesis assistant supporting a nurse in clinical practice. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Keep practice implications within the registered nurse scope of practice: when an action requires a provider order, prescribing authority, or advanced practice licensure, say so explicitly.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on application in practice, with citations>";
+    const prompt="You are a nursing evidence synthesis assistant supporting a nurse in clinical practice. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Describe each source by design and size only (for example, a 2024 meta-analysis of 35 trials). Do not characterize study quality or rigor with words such as high-quality, rigorous, robust, strong, or well-designed, because EvidenceRN labels evidence by study design without appraising quality. Report a quality judgment only when an abstract states one, and attribute it to the authors.\n- Do not use em dashes or en dashes as punctuation. Use commas, periods, colons, or parentheses, and write numeric ranges with the word to (for example, 4 to 7 mmHg).\n- Keep practice implications within the registered nurse scope of practice: when an action requires a provider order, prescribing authority, or advanced practice licensure, say so explicitly.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on application in practice, with citations>";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // a newer search started; discard this stale answer
     const text=normalizeAnswer(r);
@@ -698,7 +700,14 @@ function followupHtml(f){
 function normalizeAnswer(r){
   let text=typeof r==="string"?r:(r&&(r.text||r.content||r.answer))||JSON.stringify(r);
   if(Array.isArray(text))text=text.map(t=>t&&t.text||t).join("\n");
-  return String(text);
+  // Safety net for the no-dash style rule: numeric ranges become "to",
+  // remaining em/en dashes used as punctuation become commas.
+  return String(text)
+    .replace(/\[([\d,\s–—-]+)\]/g,(m,c)=>"["+c.replace(/[–—]/g,"-")+"]")
+    .replace(/(\d)\s*[–—]\s*(\d)/g,"$1 to $2")
+    .replace(/\s*—\s*/g,", ")
+    .replace(/\s+–\s+/g,", ")
+    .replace(/–/g,"-");
 }
 function eligibleDeep(){
   return ARTICLES.map((a,i)=>({a:a,n:i+1}))
@@ -709,7 +718,7 @@ function renderAnswer(question,text,deepRefs){
   const panel=$("#synth");
   LAST.deepShown=deepRefs;
   const secs=parseSections(text);
-  let inner='<div class="kicker">Synthesized answer · from the '+ARTICLES.length+' sources below'+
+  let inner='<div class="kicker">Synthesized answer · from the '+ARTICLES.length+(ARTICLES.length===1?' source':' sources')+' below'+
     (deepRefs?' <span class="deepnote">DEEP READ · full text of ['+deepRefs.join(", ")+']</span>':'')+'</div><h2>'+esc(question)+'</h2>';
   if(secs.bottom)inner+='<div class="sec bottom"><h5>Bottom line</h5><p>'+linkCites(secs.bottom)+'</p></div>';
   if(secs.shows)inner+='<div class="sec"><h5>What the evidence shows</h5>'+secs.shows.split(/\n{2,}/).map(p=>'<p>'+linkCites(p)+'</p>').join("")+'</div>';
@@ -773,7 +782,7 @@ async function askFollowup(){
     // Reuse full texts already retrieved by deep read, so follow-ups answer
     // from the richest material available, keeping the same source numbers.
     if(DEEP_SOURCES.length)payload.full_text_sources=DEEP_SOURCES.map(s=>({n:s.n,title:s.title,full_text:(s.full_text||"").slice(0,4000)}));
-    const prompt="A nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Keep practice implications within RN scope of practice, noting when an action requires a provider order. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
+    const prompt="A nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Keep practice implications within RN scope of practice, noting when an action requires a provider order. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // user started a new search; drop this stale reply
     const a=normalizeAnswer(r).trim();
@@ -812,7 +821,7 @@ async function deepRead(){
     if(!sources.length)throw new Error("PubMed Central holds no machine-readable full text for the eligible sources ["+misses.join(", ")+"]. Some publishers, Cochrane most notably, deposit reviews in a locked format that blocks automated full-text access even when the article displays free online. Use the DOI links to read them directly");
     btn.textContent="Refining answer with full text…";
     const payload={question:LAST.q,previous_answer_from_abstracts:LAST.text,full_text_sources:sources};
-    const prompt="You previously answered the clinical question \""+LAST.q+"\" using only abstracts (see previous_answer_from_abstracts in the attached data). You now have the FULL TEXT of sources ["+sources.map(s=>s.n).join(", ")+"].\n\nRevise the answer using the full texts. Keep the SAME source numbering. Keep citing abstract-only sources where they support claims. Add specifics only full text reveals: effect sizes, subgroup findings, implementation details, tools named, and author-stated limitations. Do not invent findings.\n\nOutput EXACTLY four sections, plain text, no markdown:\nBOTTOM LINE: <2-3 sentences with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences with citations>\nWHAT THE FULL TEXT ADDED: <2-4 one-sentence items, each on its own line, naming a specific detail found only in full text, with its citation. If a full text changed or softened any conclusion from the abstract-based answer, state it here first. If full text confirmed the abstract answer with nothing material to add, write exactly: Full text review confirmed the abstract-based answer without material changes.>";
+    const prompt="You previously answered the clinical question \""+LAST.q+"\" using only abstracts (see previous_answer_from_abstracts in the attached data). You now have the FULL TEXT of sources ["+sources.map(s=>s.n).join(", ")+"].\n\nRevise the answer using the full texts. Keep the SAME source numbering. Keep citing abstract-only sources where they support claims. Add specifics only full text reveals: effect sizes, subgroup findings, implementation details, tools named, and author-stated limitations. Do not invent findings. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to.\n\nOutput EXACTLY four sections, plain text, no markdown:\nBOTTOM LINE: <2-3 sentences with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences with citations>\nWHAT THE FULL TEXT ADDED: <2-4 one-sentence items, each on its own line, naming a specific detail found only in full text, with its citation. If a full text changed or softened any conclusion from the abstract-based answer, state it here first. If full text confirmed the abstract answer with nothing material to add, write exactly: Full text review confirmed the abstract-based answer without material changes.>";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // a newer search started; drop this stale refinement
     const text=normalizeAnswer(r);
