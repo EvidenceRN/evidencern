@@ -62,6 +62,7 @@
   .synth .bottom p{color:var(--ink);font-size:15px}
   sup.cite{font-size:10.5px;font-weight:700}
   sup.cite a{color:var(--brand-dark);cursor:pointer}
+  .synth .scope{margin-top:6px;font-size:11.5px;color:var(--muted)}
   .synth .attr{margin-top:14px;padding-top:11px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
   .synth-wait{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:14px}
   .deepbar{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -151,7 +152,7 @@
   </div>
 </div>
 <div class="wrap">
-  <div class="maturity">Prototype v0.5.2 · retrieves, screens, and labels indexed evidence with main-answer and follow-up citation checks. It does not yet perform formal critical appraisal, local-policy matching, or patient-specific clinical decision support.</div>
+  <div class="maturity">Prototype v0.5.3 · retrieves, screens, and labels indexed evidence with main-answer and follow-up citation checks. It does not yet perform formal critical appraisal, local-policy matching, or patient-specific clinical decision support.</div>
   <div class="controls">
     <div class="ctrl">
       <label>Evidence type</label>
@@ -193,7 +194,7 @@
         <span><i class="dot" style="background:var(--l1)"></i> I — SR / meta-analysis</span>
         <span><i class="dot" style="background:var(--guide)"></i> I — EBP guideline</span>
         <span><i class="dot" style="background:var(--l2)"></i> II — RCT</span>
-        <span><i class="dot" style="background:var(--l4)"></i> IV — Observational</span>
+        <span><i class="dot" style="background:var(--l4)"></i> IV — Observational / Trial, control not stated</span>
         <span><i class="dot" style="background:var(--l6)"></i> Other</span>
       </div>
     </div>
@@ -201,7 +202,7 @@
 </div>
 <footer>
   <div class="wrap">
-    <b>Prototype v0.5.2.</b> Sources retrieved live from PubMed (U.S. National Library of Medicine) via NLM E-utilities. Retracted records and retraction notices are excluded automatically using PubMed publication metadata and comments/corrections links; expressions of concern, errata, and linked updates are flagged on source cards. Main answers and follow-ups use heuristic post-generation citation checks. Synthesis is AI-generated from the retrieved abstracts only unless Deep Read retrieves PubMed Central full text. Evidence-type labels follow the Melnyk &amp; Fineout-Overholt hierarchy, inferred from publication metadata. They indicate study design, not formally appraised quality: no risk-of-bias assessment or GRADE rating is performed, so a labeled Level I source is not necessarily stronger than a well-conducted lower-level study. Apply clinical judgment and your organization's policies. Not a substitute for institutional protocols or provider orders. · EvidenceRN v0.5.2 · A project of <a href="https://www.ainurseacademy.ai" target="_blank" rel="noopener">AI + Nurse Academy</a>
+    <b>Prototype v0.5.3.</b> Sources retrieved live from PubMed (U.S. National Library of Medicine) via NLM E-utilities. Retracted records and retraction notices are excluded automatically using PubMed publication metadata and comments/corrections links; expressions of concern, errata, and linked updates are flagged on source cards. Main answers and follow-ups use heuristic post-generation citation checks. Synthesis is AI-generated from the retrieved abstracts only unless Deep Read retrieves PubMed Central full text. Evidence-type labels follow the Melnyk &amp; Fineout-Overholt hierarchy, inferred from publication metadata. A source carrying only PubMed's Clinical Trial publication type is labeled Trial (control not stated) rather than Level III, since that type does not require a control group. They indicate study design, not formally appraised quality: no risk-of-bias assessment or GRADE rating is performed, so a labeled Level I source is not necessarily stronger than a well-conducted lower-level study. Practice implications assume a generalist RN scope. Your state nurse practice act, setting, and employer policy determine what applies to you. Apply clinical judgment and your organization's policies. Not a substitute for institutional protocols or provider orders. · EvidenceRN v0.5.3 · A project of <a href="https://www.ainurseacademy.ai" target="_blank" rel="noopener">AI + Nurse Academy</a>
   </div>
 </footer>
 <script>
@@ -322,7 +323,8 @@ function evLevel(types){
   if(has("meta-analysis")||has("systematic review"))return{cls:"b-l1",top:"LEVEL I",sub:"SR / meta-analysis",w:0};
   if(has("practice guideline")||has("guideline"))return{cls:"b-guide",top:"LEVEL I",sub:"EBP guideline",w:1};
   if(has("randomized controlled trial"))return{cls:"b-l2",top:"LEVEL II",sub:"RCT",w:2};
-  if(has("controlled clinical trial")||has("clinical trial"))return{cls:"b-l3",top:"LEVEL III",sub:"Controlled trial",w:3};
+  if(has("controlled clinical trial"))return{cls:"b-l3",top:"LEVEL III",sub:"Controlled trial",w:3};
+  if(has("clinical trial"))return{cls:"b-l4",top:"TRIAL",sub:"Control not stated",w:4};
   if(has("observational study")||has("comparative study")||has("evaluation study"))return{cls:"b-l4",top:"LEVEL IV",sub:"Observational",w:4};
   if(has("case reports"))return{cls:"b-l5",top:"LEVEL VI",sub:"Case report",w:6};
   if(has("review"))return{cls:"b-l6",top:"REVIEW",sub:"Narrative review",w:5};
@@ -414,6 +416,36 @@ async function pubmedMeta(pmids){
   }).filter(Boolean);
   return {articles:articles};
 }
+// Order JATS body sections so results and discussion precede methods and introduction.
+// Each section is capped at 6,000 characters so results and discussion both fit the 12,000 budget applied later.
+function rankedSections(doc){
+  const body=doc.querySelector("body");
+  if(!body)return "";
+  const flat=el=>el.textContent.replace(/\s+/g," ").trim();
+  const secs=[...body.children].filter(n=>n.nodeName==="sec");
+  if(!secs.length)return flat(body);
+  const rank=t=>{t=t.toLowerCase();
+    if(/result|finding/.test(t))return 0;
+    if(/discussion|conclusion|implication|limitation/.test(t))return 1;
+    if(/method|design|procedure|analysis|material/.test(t))return 2;
+    if(/introduction|background|aim|objective/.test(t))return 3;
+    return 4;};
+  const blocks=secs.map((sec,i)=>{
+    const tEl=[...sec.children].find(n=>n.nodeName==="title");
+    const title=tEl?flat(tEl):("Section "+(i+1));
+    const key=title+" "+(sec.getAttribute("sec-type")||"");
+    return{title:title,text:flat(sec).slice(0,6000),r:rank(key),i:i};
+  });
+  blocks.sort((a,b)=>a.r-b.r||a.i-b.i);
+  return blocks.map(b=>"["+b.title.toUpperCase()+"] "+b.text).join("\n\n");
+}
+// Keep the head and the tail of an over-long abstract so conclusions survive the cap.
+function clipAbstract(s,max){
+  s=s||"";
+  if(s.length<=max)return s;
+  const head=Math.min(1000,Math.floor(max/4));
+  return s.slice(0,head)+" [...] "+s.slice(s.length-(max-head-7));
+}
 async function pmcFullText(pmcIds){
   const out=[];
   for(const id of pmcIds){
@@ -421,9 +453,7 @@ async function pmcFullText(pmcIds){
     try{
       const xml=await (await eutils("efetch.fcgi",{db:"pmc",id:clean,retmode:"xml"})).text();
       const doc=new DOMParser().parseFromString(xml,"text/xml");
-      const body=doc.querySelector("body");
-      const txt=body?body.textContent.replace(/\s+/g," ").trim():"";
-      out.push({identifiers:{pmc:"PMC"+clean},full_text:txt});
+      out.push({identifiers:{pmc:"PMC"+clean},full_text:rankedSections(doc)});
     }catch(e){
       out.push({identifiers:{pmc:"PMC"+clean},full_text:""});
     }
@@ -659,10 +689,10 @@ async function synthesize(question,runId,snapshot){
         year:a.publication_date&&a.publication_date.year||"",
         evidence_level:evLevel(a.article_types).top+" ("+evLevel(a.article_types).sub+")"
           +(pubFlags(a.article_types,a.integrity).concern?" — EXPRESSION OF CONCERN issued for this article; weight it accordingly and say so if cited":""),
-        abstract:(a.abstract||"").slice(0,1600)
+        abstract:clipAbstract(a.abstract,5000)
       }))
     };
-    const prompt="You are a nursing evidence synthesis assistant supporting a nurse in clinical practice. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Describe each source by design and size only (for example, a 2024 meta-analysis of 35 trials). Do not characterize study quality or rigor with words such as high-quality, rigorous, robust, strong, or well-designed, because EvidenceRN labels evidence by study design without appraising quality. Report a quality judgment only when an abstract states one, and attribute it to the authors.\n- Do not use em dashes or en dashes as punctuation. Use commas, periods, colons, or parentheses, and write numeric ranges with the word to (for example, 4 to 7 mmHg).\n- Keep practice implications within the registered nurse scope of practice: when an action requires a provider order, prescribing authority, or advanced practice licensure, say so explicitly.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on application in practice, with citations>";
+    const prompt="You are a nursing evidence synthesis assistant supporting a nurse in clinical practice. Using ONLY the numbered source abstracts in the attached data, answer the clinical question: \""+question+"\".\n\nRules:\n- Every factual claim must carry a bracketed citation like [1] or [2,3] referring to source numbers.\n- Weight stronger evidence (guidelines, Level I systematic reviews) over weaker designs, and say so when evidence conflicts or is thin.\n- Do not invent findings absent from the abstracts. If the sources cannot answer the question, say what is missing.\n- Write for a nurse with two minutes between patients: plain language, specific effect sizes or magnitudes when the abstracts give them.\n- Describe each source by design and size only (for example, a 2024 meta-analysis of 35 trials). Do not characterize study quality or rigor with words such as high-quality, rigorous, robust, strong, or well-designed, because EvidenceRN labels evidence by study design without appraising quality. Report a quality judgment only when an abstract states one, and attribute it to the authors.\n- Do not use em dashes or en dashes as punctuation. Use commas, periods, colons, or parentheses, and write numeric ranges with the word to (for example, 4 to 7 mmHg).\n- Frame practice implications for a generalist registered nurse. Scope of practice is set by state nurse practice acts, the care setting, and employer policy, so when an action requires a provider order, prescribing authority, or advanced practice licensure under common U.S. practice, say so, and do not assert what any specific state or institution permits.\n- Distinguish explicitly between three outcomes: (a) the sources did not study this question or outcome, (b) the sources studied it and found no difference or no effect, in which case report the estimate and confidence interval when the abstract gives them, and (c) the sources found an effect. Never describe (a) as evidence of no effect.\n- When the evidence poorly represents a population relevant to the question (age, setting, acuity), note the applicability limit.\n\nOutput EXACTLY three sections in this format, plain text, no markdown:\nBOTTOM LINE: <2-3 sentence direct answer with citations, opening with exactly one of these phrases: The retrieved sources do not address this question / The retrieved sources found no significant difference / The retrieved sources support / The retrieved sources are mixed>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences on application in practice, with citations>";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // a newer search started; discard this stale answer
     const text=normalizeAnswer(r);
@@ -722,7 +752,7 @@ function renderAnswer(question,text,deepRefs){
     (deepRefs?' <span class="deepnote">DEEP READ · full text of ['+deepRefs.join(", ")+']</span>':'')+'</div><h2>'+esc(question)+'</h2>';
   if(secs.bottom)inner+='<div class="sec bottom"><h5>Bottom line</h5><p>'+linkCites(secs.bottom)+'</p></div>';
   if(secs.shows)inner+='<div class="sec"><h5>What the evidence shows</h5>'+secs.shows.split(/\n{2,}/).map(p=>'<p>'+linkCites(p)+'</p>').join("")+'</div>';
-  if(secs.practice)inner+='<div class="sec"><h5>Practice implications</h5><p>'+linkCites(secs.practice)+'</p></div>';
+  if(secs.practice)inner+='<div class="sec"><h5>Practice implications</h5><p>'+linkCites(secs.practice)+'</p><p class="scope">Scope assumption: this answer assumes a generalist RN scope. Your state nurse practice act, your setting, and your employer\'s policies determine what applies to you.</p></div>';
   if(deepRefs&&secs.added)inner+='<div class="sec" style="background:#fdf6ec;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:11px 14px"><h5 style="color:var(--warn)">What the full text added</h5>'+secs.added.split(/\n+/).filter(Boolean).map(p=>'<p>'+linkCites(p)+'</p>').join("")+'</div>';
   if(deepRefs&&PREV_TEXT)inner+='<details style="margin-top:12px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--accent)">Compare with the abstract-only answer</summary><div style="font-size:13px;color:var(--muted);white-space:pre-line;margin-top:8px;padding:10px 12px;background:var(--bg);border-radius:8px">'+esc(PREV_TEXT)+'</div></details>';
   if(!secs.bottom&&!secs.shows&&!secs.practice)inner+='<div class="sec"><p>'+linkCites(text)+'</p></div>';
@@ -776,13 +806,13 @@ async function askFollowup(){
         n:i+1,title:a.title,
         year:a.publication_date&&a.publication_date.year||"",
         evidence_level:evLevel(a.article_types).top+" ("+evLevel(a.article_types).sub+")",
-        abstract:(a.abstract||"").slice(0,1200)
+        abstract:clipAbstract(a.abstract,3000)
       }))
     };
     // Reuse full texts already retrieved by deep read, so follow-ups answer
     // from the richest material available, keeping the same source numbers.
     if(DEEP_SOURCES.length)payload.full_text_sources=DEEP_SOURCES.map(s=>({n:s.n,title:s.title,full_text:(s.full_text||"").slice(0,4000)}));
-    const prompt="A nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Keep practice implications within RN scope of practice, noting when an action requires a provider order. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
+    const prompt="A nurse asked a clinical question, received a cited answer, and now asks a FOLLOW-UP (see follow_up_question in the attached data, with the original question, previous answer, and any earlier follow-ups for context).\n\nAnswer the follow-up in 2-6 sentences using ONLY the numbered source abstracts provided, plus full_text_sources where present (same numbering; prefer full text over the abstract for those sources). Cite every factual claim with bracketed source numbers like [2] or [1,4], keeping the SAME numbering as the previous answer. Weight stronger evidence. Frame practice implications for a generalist registered nurse, noting when an action requires a provider order or advanced practice licensure, without asserting what any specific state or institution permits. If the sources did not study the follow-up question, say so, and never describe that as evidence of no effect. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to. If these sources cannot answer the follow-up, say so plainly and suggest what a new search should ask instead. Plain text only, no markdown, no section headers.";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // user started a new search; drop this stale reply
     const a=normalizeAnswer(r).trim();
@@ -814,14 +844,14 @@ async function deepRead(){
         const ft=await pmcFullText([String(x.a.identifiers.pmc)]);
         const fa=(ft.articles||[])[0];
         const txt=fa&&fa.full_text||"";
-        if(txt.length>500)sources.push({n:x.n,title:x.a.title,full_text:txt.slice(0,8000)});
+        if(txt.length>500)sources.push({n:x.n,title:x.a.title,full_text:txt.slice(0,12000)});
         else misses.push(x.n);
       }catch(e){misses.push(x.n);}
     }
     if(!sources.length)throw new Error("PubMed Central holds no machine-readable full text for the eligible sources ["+misses.join(", ")+"]. Some publishers, Cochrane most notably, deposit reviews in a locked format that blocks automated full-text access even when the article displays free online. Use the DOI links to read them directly");
     btn.textContent="Refining answer with full text…";
     const payload={question:LAST.q,previous_answer_from_abstracts:LAST.text,full_text_sources:sources};
-    const prompt="You previously answered the clinical question \""+LAST.q+"\" using only abstracts (see previous_answer_from_abstracts in the attached data). You now have the FULL TEXT of sources ["+sources.map(s=>s.n).join(", ")+"].\n\nRevise the answer using the full texts. Keep the SAME source numbering. Keep citing abstract-only sources where they support claims. Add specifics only full text reveals: effect sizes, subgroup findings, implementation details, tools named, and author-stated limitations. Do not invent findings. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to.\n\nOutput EXACTLY four sections, plain text, no markdown:\nBOTTOM LINE: <2-3 sentences with citations>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences with citations>\nWHAT THE FULL TEXT ADDED: <2-4 one-sentence items, each on its own line, naming a specific detail found only in full text, with its citation. If a full text changed or softened any conclusion from the abstract-based answer, state it here first. If full text confirmed the abstract answer with nothing material to add, write exactly: Full text review confirmed the abstract-based answer without material changes.>";
+    const prompt="You previously answered the clinical question \""+LAST.q+"\" using only abstracts (see previous_answer_from_abstracts in the attached data). You now have the FULL TEXT of sources ["+sources.map(s=>s.n).join(", ")+"].\n\nRevise the answer using the full texts. Keep the SAME source numbering. Keep citing abstract-only sources where they support claims. Add specifics only full text reveals: effect sizes, subgroup findings, implementation details, tools named, and author-stated limitations. Do not invent findings. Frame practice implications for a generalist registered nurse, noting when an action requires a provider order or advanced practice licensure, without asserting what any specific state or institution permits. Distinguish between sources that did not study the question, sources that found no difference (report the estimate and confidence interval when given), and sources that found an effect. Describe sources by design and size only, never with quality words such as high-quality, rigorous, or robust, since EvidenceRN does not appraise quality. Do not use em dashes or en dashes, and write numeric ranges with the word to.\n\nOutput EXACTLY four sections, plain text, no markdown:\nBOTTOM LINE: <2-3 sentences with citations, opening with exactly one of these phrases: The retrieved sources do not address this question / The retrieved sources found no significant difference / The retrieved sources support / The retrieved sources are mixed>\nWHAT THE EVIDENCE SHOWS: <1-2 short paragraphs with citations>\nPRACTICE IMPLICATIONS: <2-4 short sentences with citations>\nWHAT THE FULL TEXT ADDED: <2-4 one-sentence items, each on its own line, naming a specific detail found only in full text, with its citation. If a full text changed or softened any conclusion from the abstract-based answer, state it here first. If full text confirmed the abstract answer with nothing material to add, write exactly: Full text review confirmed the abstract-based answer without material changes.>";
     const r=await askAI(prompt,payload);
     if(runId!==RUN_ID)return; // a newer search started; drop this stale refinement
     const text=normalizeAnswer(r);
