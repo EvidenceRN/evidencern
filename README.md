@@ -4,7 +4,7 @@
 
 Ask a clinical question in plain language. EvidenceRN searches PubMed, screens out retracted records, labels each source by evidence type (Melnyk & Fineout-Overholt hierarchy), and writes a short synthesized answer where every claim links to a numbered source. Follow-up questions reuse the same sources. A "deep read" pulls open-access full text from PubMed Central to refine the answer.
 
-Status: **prototype (v0.5.2)**. EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai), built by a nurse practitioner to show what a transparent, open evidence assistant for nurses looks like. It is not a clinical decision support product. See [LIMITATIONS.md](LIMITATIONS.md) before using it for anything beyond exploration and education.
+Status: **prototype (v0.5.3)**. EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai), built by a nurse practitioner to show what a transparent, open evidence assistant for nurses looks like. It is not a clinical decision support product. See [LIMITATIONS.md](LIMITATIONS.md) before using it for anything beyond exploration and education.
 
 ## Why this exists
 
@@ -18,9 +18,9 @@ The code is open under Apache 2.0. The name EvidenceRN belongs to the project fo
 - Filters by evidence type (best available, systematic reviews, guidelines, RCTs, or any), recency, and nursing focus, and relaxes filters one axis at a time when strict searches return nothing
 - Retrieves a wider candidate pool than requested, ranks by evidence level, and keeps the strongest set
 - Excludes retracted publications and retraction notices using PubMed publication types and CommentsCorrections links; flags expressions of concern, errata, and linked updates on source cards
-- Generates a three-section answer (bottom line, what the evidence shows, practice implications) with bracketed citations, written for RN scope of practice
+- Generates a three-section answer (bottom line, what the evidence shows, practice implications) with bracketed citations, framed for a generalist RN scope that is stated under every answer, and required to separate "the sources did not study this" from "the sources found no difference"
 - Runs a heuristic citation check on every answer and follow-up: citation numbers outside the source list and substantive sentences without a citation get flagged
-- Deep read: retrieves PubMed Central full text for top Level I sources and revises the answer, with a "what the full text added" section and a comparison to the abstract-only answer
+- Deep read: retrieves PubMed Central full text for top Level I sources, reads sections in ranked order (results, then discussion and conclusions, then methods, then introduction) within a 12,000 character budget, and revises the answer, with a "what the full text added" section and a comparison to the abstract-only answer
 - Surfaces a hand-curated index of gray literature (CDC, AHRQ, NICE, ISMP, and others) by topic, clearly marked as not read by the synthesis engine
 - Shows an urgent-situation banner when a question describes a potentially acute event
 - Discloses that no institutional policy is connected
@@ -76,3 +76,5 @@ Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 EvidenceRN is a project of [AI + Nurse Academy](https://www.ainurseacademy.ai), which offers nurse-led AI education for nurses and other clinicians. Project site: https://evidencern.com
 
 Sources come from PubMed and PubMed Central, services of the U.S. National Library of Medicine. NLM does not endorse this software. Evidence-level labels follow Melnyk, B. M., & Fineout-Overholt, E., *Evidence-Based Practice in Nursing & Healthcare*.
+
+The v0.5.3 changes (section-aware deep read, longer abstract windows, a separate label for trials whose PubMed metadata states no control group, the rule separating no evidence found from evidence of no effect, and the stated scope assumption) respond to a clinician code review by Sarah Curtright, DNP, MBA, in October 2026.
