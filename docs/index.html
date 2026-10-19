@@ -174,7 +174,7 @@
 <header class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="kicker">Open-source prototype · v0.5.2</span>
+      <span class="kicker">Open-source prototype · v0.5.3</span>
       <h1>Cited evidence for nursing practice.</h1>
       <p class="lead">Ask a clinical question in plain language. EvidenceRN searches PubMed, screens out retracted research, labels every source by level of evidence, and writes a short answer where each claim links to its source.</p>
       <div class="ctas">
@@ -226,7 +226,7 @@
     <div class="steps">
       <div class="step"><div class="n">1</div><h3>Interprets the question</h3><p>Converts plain language into a PubMed search and shows the exact query it ran, the filters applied, and the search date.</p></div>
       <div class="step"><div class="n">2</div><h3>Finds and ranks evidence</h3><p>Retrieves a wide pool of studies, removes retracted records, and ranks the rest by level of evidence, with systematic reviews and guidelines first.</p></div>
-      <div class="step"><div class="n">3</div><h3>Writes a cited answer</h3><p>Produces a bottom line, a summary of the evidence, and practice implications within RN scope. Every claim carries a numbered citation.</p></div>
+      <div class="step"><div class="n">3</div><h3>Writes a cited answer</h3><p>Produces a bottom line, a summary of the evidence, and practice implications framed for a generalist RN scope, stated under every answer. Every claim carries a numbered citation.</p></div>
       <div class="step"><div class="n">4</div><h3>Checks its own work</h3><p>Flags citation numbers outside the source list and sentences without a citation, so the reader knows where to verify.</p></div>
     </div>
   </div>
@@ -241,9 +241,9 @@
       <div class="feature"><div class="ic">🔎</div><h3>Visible search strategy</h3><p>A panel under every answer shows the question as interpreted, the database searched, the filters, the exact query, and how many records matched.</p></div>
       <div class="feature"><div class="ic">🏷️</div><h3>Evidence labels</h3><p>Each source carries a level-of-evidence label from the Melnyk and Fineout-Overholt hierarchy, inferred from its PubMed publication type.</p></div>
       <div class="feature"><div class="ic">🚫</div><h3>Retraction screening</h3><p>Retracted publications and retraction notices are excluded before ranking. Expressions of concern, errata, and updates are flagged on the source.</p></div>
-      <div class="feature"><div class="ic">📖</div><h3>Deep read</h3><p>Pulls open-access full text from PubMed Central for the top Level I sources, revises the answer, and lists what the full text added.</p></div>
+      <div class="feature"><div class="ic">📖</div><h3>Deep read</h3><p>Pulls open-access full text from PubMed Central for the top Level I sources, reads the results and discussion sections first, revises the answer, and lists what the full text added.</p></div>
       <div class="feature"><div class="ic">💬</div><h3>Follow-up questions</h3><p>Follow-ups draw on the same sources and keep the same citation numbers, so the thread stays traceable.</p></div>
-      <div class="feature"><div class="ic">🛡️</div><h3>Safety prompts</h3><p>An urgent-situation banner, RN scope-of-practice language, and a notice that no institutional policy is connected appear on every relevant answer.</p></div>
+      <div class="feature"><div class="ic">🛡️</div><h3>Safety prompts</h3><p>An urgent-situation banner, a stated scope assumption, and a notice that no institutional policy is connected appear on every relevant answer.</p></div>
     </div>
     <div class="legend" aria-label="Evidence level legend">
       <span><i class="dot" style="background:var(--l1)"></i>Level I · Systematic review or meta-analysis</span>
@@ -251,6 +251,7 @@
       <span><i class="dot" style="background:var(--l2)"></i>Level II · Randomized controlled trial</span>
       <span><i class="dot" style="background:var(--l3)"></i>Level III · Controlled trial</span>
       <span><i class="dot" style="background:var(--l4)"></i>Level IV · Observational</span>
+      <span><i class="dot" style="background:var(--l4)"></i>Trial · Control not stated in PubMed</span>
       <span><i class="dot" style="background:var(--l6)"></i>Other designs</span>
     </div>
   </div>
@@ -272,6 +273,7 @@
         <li>It searches PubMed only. CINAHL, JBI, Cochrane full text, and local policy are on the roadmap.</li>
         <li>Evidence labels reflect study design. No risk-of-bias or GRADE assessment is performed.</li>
         <li>Answers draw on abstracts unless full text is available through PubMed Central.</li>
+        <li>Answers assume a generalist RN scope. Your state nurse practice act, your setting, and your employer's policies determine what applies to you.</li>
         <li>It is not clinical decision support and does not replace institutional policy, protocols, or provider orders.</li>
       </ul>
       <p style="margin:14px 0 0;font-size:15px"><a href="https://github.com/EvidenceRN/evidencern/blob/main/LIMITATIONS.md">Read the full limitations and roadmap</a></p>
